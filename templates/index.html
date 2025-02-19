@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescription Scanner</title>
+    <script>
+        function uploadImage() {
+            let formData = new FormData();
+            let fileInput = document.getElementById('fileInput');
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById('uploadedImage').src = data.image_url;
+                    document.getElementById('extractedText').innerText = data.extracted_text;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</head>
+<body>
+    <h1>Prescription Scanner</h1>
+    <input type="file" id="fileInput">
+    <button onclick="uploadImage()">Upload & Process</button>
+    <br><br>
+    <img id="uploadedImage" src="" alt="Uploaded Prescription" style="max-width: 400px;">
+    <p id="extractedText"></p>
+</body>
+</html>
+"""
