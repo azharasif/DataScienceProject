@@ -1,0 +1,7 @@
+venv
+.venv/
+pyvenv.cfg
+.venv/bin/
+.venv/lib/
+.venv/include/
+data/
