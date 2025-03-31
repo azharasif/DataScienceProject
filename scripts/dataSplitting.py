@@ -17,43 +17,47 @@ all_images = df["filename"].tolist()
 # Shuffle dataset for randomness
 random.shuffle(all_images)
 
-# **Split dataset (70% Train, 20% Test, 10% Real Test)**
-train_size = int(0.7 * len(all_images))  # 90 images
-test_size = int(0.2 * len(all_images))   # 26 images
-real_test_size = len(all_images) - train_size - test_size  # 13 images
+train_size = int(0.7 * len(all_images))  
+test_size = int(0.2 * len(all_images))  
+real_test_size = len(all_images) - train_size - test_size  
 
 train_images = all_images[:train_size]
 test_images = all_images[train_size:train_size + test_size]
 real_test_images = all_images[train_size + test_size:]
 
-# **Ensure output directories exist**
 for path in [cnn_hog_path, efficientnet_path]:
     os.makedirs(os.path.join(path, "train"), exist_ok=True)
     os.makedirs(os.path.join(path, "test"), exist_ok=True)
 os.makedirs(real_test_path, exist_ok=True)
 
-# **Function to copy images**
-def copy_images(images, dest_folder):
+def copy_images(images, src_folder, dest_folder):
     for img in images:
-        shutil.copy(os.path.join(raw_data_path, img), os.path.join(dest_folder, img))
+        src_path = os.path.join(src_folder, img)
+        dest_path = os.path.join(dest_folder, img)
+        
+        if os.path.exists(src_path):
+            shutil.copy(src_path, dest_path)
+        else:
+            print(f"{img} not found in {src_folder}")
 
-# **Copy training & test images for both models**
-copy_images(train_images, os.path.join(cnn_hog_path, "train"))
-copy_images(train_images, os.path.join(efficientnet_path, "train"))
+copy_images(train_images, raw_data_path, os.path.join(cnn_hog_path, "train"))
+copy_images(train_images, raw_data_path, os.path.join(efficientnet_path, "train"))
 
-copy_images(test_images, os.path.join(cnn_hog_path, "test"))
-copy_images(test_images, os.path.join(efficientnet_path, "test"))
+copy_images(test_images, raw_data_path, os.path.join(cnn_hog_path, "test"))
+copy_images(test_images, raw_data_path, os.path.join(efficientnet_path, "test"))
 
-# **Copy real test images (no labels)**
-copy_images(real_test_images, real_test_path)
+copy_images(real_test_images, raw_data_path, real_test_path)
 
-# **Save filenames for tracking**
-pd.DataFrame({"filename": train_images}).to_csv(os.path.join(cnn_hog_path, "train_filenames.csv"), index=False)
-pd.DataFrame({"filename": test_images}).to_csv(os.path.join(cnn_hog_path, "test_filenames.csv"), index=False)
+def save_csv(filenames, folder, filename):
+    df = pd.DataFrame({"filename": filenames})
+    df.to_csv(os.path.join(folder, filename), index=False)
 
-pd.DataFrame({"filename": train_images}).to_csv(os.path.join(efficientnet_path, "train_filenames.csv"), index=False)
-pd.DataFrame({"filename": test_images}).to_csv(os.path.join(efficientnet_path, "test_filenames.csv"), index=False)
+save_csv(train_images, cnn_hog_path, "train_filenames.csv")
+save_csv(test_images, cnn_hog_path, "test_filenames.csv")
 
-pd.DataFrame({"filename": real_test_images}).to_csv(os.path.join(real_test_path, "real_test_filenames.csv"), index=False)
+save_csv(train_images, efficientnet_path, "train_filenames.csv")
+save_csv(test_images, efficientnet_path, "test_filenames.csv")
 
-print("✅ Dataset successfully split into training, testing, and real test sets!")
+save_csv(real_test_images, real_test_path, "real_test_filenames.csv")
+
+print(" Dataset successfully split into training, testing, and real test sets!")
