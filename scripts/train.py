@@ -1,43 +1,57 @@
-from cnn_hog_model import build_cnn_hog_model
+from cnn_model import build_cnn_model
 from efficientnet_model import build_efficientnet_model
-from data_preprocessing import preprocess_cnn_hog_data, preprocess_efficientnet_data
+from data_preprocessing import load_data
 from tensorflow.keras.callbacks import EarlyStopping
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.utils import to_categorical
 
-def train_cnn_hog():
-    """Train CNN + HOG Model."""
-    images_train_1, hog_train_1, labels_train_1, images_test_1, hog_test_1, labels_test_1 = preprocess_cnn_hog_data()
+def train_model(model, images_train, labels_train, images_val, labels_val, epochs=10, batch_size=32):
+    early_stop = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
 
-    model = build_cnn_hog_model()
-    
-    # Early stopping to prevent overfitting
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
+    images_train = np.array(images_train, dtype=np.float32) / 255.0
+    images_val = np.array(images_val, dtype=np.float32) / 255.0
 
-    # Training CNN + HOG Model
-    model.fit([images_train_1, hog_train_1], labels_train_1, epochs=50, batch_size=32,
-              validation_data=([images_test_1, hog_test_1], labels_test_1),
-              callbacks=[early_stopping])
+    label_encoder = LabelEncoder()
+    labels_train_encoded = label_encoder.fit_transform(labels_train)
+    labels_val_encoded = label_encoder.transform(labels_val)
 
-    # Save the model
-    model.save('models/cnn_hog_model.h5')
+    num_classes = len(label_encoder.classes_)
+    print(f"Number of classes detected: {num_classes}")
 
-def train_efficientnet():
-    """Train EfficientNet Model."""
-    images_train_2, labels_train_2, images_test_2, labels_test_2 = preprocess_efficientnet_data()
+    labels_train_cat = to_categorical(labels_train_encoded, num_classes=num_classes)
+    labels_val_cat = to_categorical(labels_val_encoded, num_classes=num_classes)
 
-    model = build_efficientnet_model()
-    
-    # Early stopping to prevent overfitting
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5)
 
-    # Training EfficientNet Model
-    model.fit(images_train_2, labels_train_2, epochs=50, batch_size=32,
-              validation_data=(images_test_2, labels_test_2),
-              callbacks=[early_stopping])
+    # Train the model
+    history = model.fit(images_train, labels_train_cat,
+                        validation_data=(images_val, labels_val_cat),
+                        epochs=epochs,
+                        batch_size=batch_size,
+                        callbacks=[early_stop])
 
-    # Save the model
-    model.save('models/efficientnet_model.h5')
+    return history, num_classes
 
-if __name__ == '__main__':
-    # Train each model
-    train_cnn_hog()
-    train_efficientnet()
+
+def main():
+    """Main function to load data and train CNN + EfficientNet models."""
+
+    label_column = 'MEDICINE_NAME'
+
+    images_train, labels_train = load_data('data/Training/training_words', 'data/Training/training_labels.csv', label_column)
+    images_val, labels_val = load_data('data/Validation/validation_words', 'data/Validation/validation_labels.csv', label_column)
+    images_test, labels_test = load_data('data/Testing/testing_words', 'data/Testing/testing_labels.csv', label_column)
+
+    input_shape = (128, 128, 3)
+
+    # print("Training CNN model...")
+    # cnn_model = build_cnn_model(input_shape=input_shape)
+    # train_model(cnn_model, images_train, labels_train, images_val, labels_val)
+
+    print("Training EfficientNet model...")
+    efficientnet_model = build_efficientnet_model(input_shape=input_shape)
+    train_model(efficientnet_model, images_train, labels_train, images_val, labels_val)
+
+
+if __name__ == "__main__":
+    main()

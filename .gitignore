@@ -5,3 +5,5 @@ pyvenv.cfg
 .venv/lib/
 .venv/include/
 data/
+scripts/
+__pycache__/

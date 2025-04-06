@@ -1,20 +1,13 @@
 from tensorflow.keras.applications import EfficientNetB0
-from tensorflow.keras import layers, models
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout, Input
 
-def build_efficientnet_model():
-    """Build the EfficientNet model."""
-    base_model = EfficientNetB0(weights='imagenet', include_top=False, input_shape=(128, 128, 3))
-    base_model.trainable = False  # Freeze the base model layers
-
-    model = models.Sequential([
-        base_model,
-        layers.GlobalAveragePooling2D(),
-        layers.Dense(128, activation='relu'),
-        layers.Dropout(0.5),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(1, activation='sigmoid')
-    ])
-
-    model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['accuracy'])
+def build_efficientnet_model(input_shape=(128, 128, 3), num_classes=78):
+    base_model = EfficientNetB0(include_top=False, weights='imagenet', input_tensor=Input(shape=input_shape))
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dropout(0.5)(x)
+    outputs = Dense(num_classes, activation='softmax')(x)
+    model = Model(inputs=base_model.input, outputs=outputs)
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model

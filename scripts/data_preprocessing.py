@@ -1,82 +1,31 @@
+import os
 import cv2
 import numpy as np
 import pandas as pd
-from skimage.feature import hog
-import cv2
-import numpy as np
-import pandas as pd
 
-
-def preprocess_images_and_labels(image_folder, labels_csv):
-    """Preprocess images and extract labels."""
-    # Read labels from CSV
+def load_data(image_folder, labels_csv, label_column='MEDICINE_NAME'):
+    """Load and preprocess images and labels from CSV file."""
     labels_df = pd.read_csv(labels_csv)
-    image_files = labels_df['filename'].values
-    labels = labels_df['label'].values
-    
+
+    if label_column not in labels_df.columns:
+        raise ValueError(f"'{label_column}' not found in CSV columns: {labels_df.columns.tolist()}")
+
+    image_files = labels_df['IMAGE'].values
+    labels = labels_df[label_column].values
+
     images = []
-    hog_features = []
+    valid_labels = []
 
-    for image_file in image_files:
-        # Read and preprocess image
-        img_path = f'{image_folder}/{image_file}'
-        img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)  # Load image in grayscale
-        img = cv2.resize(img, (128, 128))  # Resize to consistent size
-        
-        # Extract HOG features
-        fd, hog_image = hog(img, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(2, 2), visualize=True)
-        
+    for img_file, label in zip(image_files, labels):
+        img_path = os.path.join(image_folder, img_file)
+        img = cv2.imread(img_path, cv2.IMREAD_COLOR)  # Load in BGR format
+
+        if img is None:
+            print(f"[Warning] Unable to read image {img_path}. Skipping.")
+            continue
+
+        img = cv2.resize(img, (128, 128))
         images.append(img)
-        hog_features.append(fd)
-    
-    images = np.array(images)
-    hog_features = np.array(hog_features)
-    
-    return images, hog_features, labels
+        valid_labels.append(label)
 
-def preprocess_cnn_hog_data():
-    """Preprocess data for CNN + HOG model."""
-    # Preprocess data for CNN + HOG
-    images_train_1, hog_train_1, labels_train_1 = preprocess_images_and_labels('data/model_1_cnn_hog/train', 'data/labels.csv')
-    images_test_1, hog_test_1, labels_test_1 = preprocess_images_and_labels('data/model_1_cnn_hog/test', 'data/labels.csv')
-
-    # Normalize images
-    images_train_1 = images_train_1 / 255.0
-    images_test_1 = images_test_1 / 255.0
-
-    return images_train_1, hog_train_1, labels_train_1, images_test_1, hog_test_1, labels_test_1
-
-
-
-def preprocess_images(image_folder, labels_csv):
-    """Preprocess images for EfficientNet."""
-    # Read labels from CSV
-    labels_df = pd.read_csv(labels_csv)
-    image_files = labels_df['filename'].values
-    labels = labels_df['label'].values
-    
-    images = []
-    
-    for image_file in image_files:
-        # Read image
-        img_path = f'{image_folder}/{image_file}'
-        img = cv2.imread(img_path)  # Load in RGB (default)
-        img = cv2.resize(img, (128, 128))  # Resize for EfficientNet
-        
-        images.append(img)
-    
-    images = np.array(images)
-    
-    return images, labels
-
-def preprocess_efficientnet_data():
-    """Preprocess data for EfficientNet model."""
-    # Preprocess data for EfficientNet
-    images_train_2, labels_train_2 = preprocess_images('data/model_2_efficientnet/train', 'data/labels.csv')
-    images_test_2, labels_test_2 = preprocess_images('data/model_2_efficientnet/test', 'data/labels.csv')
-
-    # Normalize images
-    images_train_2 = images_train_2 / 255.0
-    images_test_2 = images_test_2 / 255.0
-
-    return images_train_2, labels_train_2, images_test_2, labels_test_2
+    return np.array(images), np.array(valid_labels)
