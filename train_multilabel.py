@@ -19,7 +19,7 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(42)
 
 data_dir = "synthetic_prescriptions_multiple"
-output_dir = "output_multilabel"
+output_dir = "output_Resnet_multilabel"
 
 medicine_names = [
     "Aspirin", "Paracetamol", "Ibuprofen", "Amoxicillin", "Ciprofloxacin", "Metformin", "Atorvastatin",
