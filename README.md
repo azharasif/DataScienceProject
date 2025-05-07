@@ -24,7 +24,7 @@ Testing: 1,800 images.
 Labels: CSV files (training_labels.csv, validation_labels.csv, testing_labels.csv) with 30 binary columns for medicines (e.g., Aspirin, Paracetamol, ..., Insulin).
 Medicines: 30 common medicines, including Aspirin, Paracetamol, Ibuprofen, Amoxicillin, Metformin, etc.
 Distribution: Each image contains 1–5 medicines, with balanced representation (~800 occurrences per medicine in training).
-The dataset is stored in synthetic_prescriptions_urdu_inspired/{training, validation, testing}/.
+The dataset is stored in synthetic_prescriptions_multilable/{training, validation, testing}/.
 
 mainpage.py: Hanlde GUI for pictre upload and showing results
 generateDataset: generate synthetic images using the set of 30 medicnes 
