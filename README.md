@@ -55,6 +55,5 @@ Installation
 
 Clone the repository:
 
-git clone https://github.com/your-repo/prescription-medicine-identification.git
-cd prescription-medicine-identification
+git clone https://github.com/azharasif/DataScienceProject.git
 
